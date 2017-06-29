@@ -2,6 +2,8 @@ import tensorflow as tf
 import numpy as np
 import os
 import sys
+from transforms3d.quaternions import *
+
 outDir="../records"
 inDir="../dataset"
 count=0
@@ -20,7 +22,7 @@ def _int64_feature(value):
 def _int64s_feature(value):
   return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
 
-def recorder(imu,imu_len,prev_pose,curr_pose):
+def recorder(imu,imu_len,rel_pose):
 	global count
 	count +=1
 	sys.stdout.write("\r processed %d sample" %count)
@@ -29,13 +31,11 @@ def recorder(imu,imu_len,prev_pose,curr_pose):
 	compress = tf.python_io.TFRecordOptions(compression_type=tf.python_io.TFRecordCompressionType.GZIP)
 	writer = tf.python_io.TFRecordWriter(recordFile, options=compress)
 	imu = imu.tostring()
-	prev_pose = prev_pose.tostring()
-	curr_pose = curr_pose.tostring()
+	rel_pose = rel_pose.tostring()
 	example = tf.train.Example(features=tf.train.Features(feature={
 	  'imu_len': _int64_feature(imu_len),
 	  'imu': _bytes_feature(imu),
-	  'prev_pose': _bytes_feature(prev_pose),
-	  'curr_pose': _bytes_feature(curr_pose),
+	  'rel_pose': _bytes_feature(rel_pose),
 	}))
 	writer.write(example.SerializeToString())
 	writer.close()
@@ -83,4 +83,16 @@ if __name__ == '__main__':
 			prev_pose=vicon_data[np.argmin(abs(vicon_time-imu_time[i,0])),None]
 			stack=(imu_data[i:i+window,None])
 			curr_pose=vicon_data[np.argmin(abs(vicon_time-imu_time[i+window,0])),None]
-			recorder(stack,window,prev_pose,curr_pose)	
+			#pose 1
+			rot1= quat2mat(prev_pose[0,3:7])
+			t1=np.reshape(prev_pose[0,0:3],[1,3])
+			T1=np.hstack((rot1,np.transpose(t1)))
+			T1=np.vstack((T1,np.array([0,0,0,1])))
+			#pose 2
+			rot2= quat2mat(curr_pose[0,3:7])
+			t2=np.reshape(curr_pose[0,0:3],[1,3])
+			T2=np.hstack((rot2,np.transpose(t2)))
+			T2=np.vstack((T2,np.array([0,0,0,1])))
+			T_rel=np.matmul(np.linalg.inv(T2),T1)
+			rel_pose=np.hstack((np.transpose(T_rel[0:3,3]),mat2quat(T_rel[0:3,0:3])))
+			recorder(stack,window,rel_pose)	
