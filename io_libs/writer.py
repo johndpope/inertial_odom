@@ -3,9 +3,10 @@ import numpy as np
 import os
 import sys
 from transforms3d.quaternions import *
+import csv
 
-outDir="../records"
-inDir="../dataset"
+outDir="./records"
+inDir="./dataset"
 count=0
 if not os.path.exists(outDir):
 	os.makedirs(outDir)
@@ -40,8 +41,6 @@ def recorder(imu,imu_len,rel_pose):
 	writer.write(example.SerializeToString())
 	writer.close()
 
-import csv
-
 def read_sensor(file_name):
 	with open(file_name) as csvfile:
 		readCSV = csv.reader(csvfile, delimiter=',')
@@ -59,40 +58,44 @@ def read_sensor(file_name):
 				sensor_reading=data
 			else:
 				sensor_reading=np.vstack((sensor_reading,data))
-	print(np.shape(time))
-	print(np.shape(sensor_reading))
+	# print(np.shape(time))
+	# print(np.shape(sensor_reading))
 	return (time,sensor_reading)
-
-if __name__ == '__main__':
+# if __name__ == '__main__':
+def write_tfrecords():
 	cam_freq=10
 	window=int(200/cam_freq) #20
 	stride=int(200/100) #2
-	#200 Hz
-	imu_file=inDir+'/v'+str(1)+'/imu0/data.csv'
-	(imu_time,imu_data)=read_sensor(imu_file)
-	#100 Hz
-	vicon_file=inDir+'/v'+str(1)+'/vicon0/data.csv'
-	(vicon_time,vicon_data)=read_sensor(vicon_file)
-	t_p=0# previous time
-	for i in range(1, len(imu_time)-window,stride):
-		# print(np.argmin(abs(vicon_time-imu_time[i,0])), np.min(abs(vicon_time-imu_time[i,0])))
-		if (t_p==np.argmin(abs(vicon_time-imu_time[i,0]))):
-			continue
-		else:
-			t_p=np.argmin(abs(vicon_time-imu_time[i,0]))
-			prev_pose=vicon_data[np.argmin(abs(vicon_time-imu_time[i,0])),None]
-			stack=(imu_data[i:i+window,None])
-			curr_pose=vicon_data[np.argmin(abs(vicon_time-imu_time[i+window,0])),None]
-			#pose 1
-			rot1= quat2mat(prev_pose[0,3:7])
-			t1=np.reshape(prev_pose[0,0:3],[1,3])
-			T1=np.hstack((rot1,np.transpose(t1)))
-			T1=np.vstack((T1,np.array([0,0,0,1])))
-			#pose 2
-			rot2= quat2mat(curr_pose[0,3:7])
-			t2=np.reshape(curr_pose[0,0:3],[1,3])
-			T2=np.hstack((rot2,np.transpose(t2)))
-			T2=np.vstack((T2,np.array([0,0,0,1])))
-			T_rel=np.matmul(np.linalg.inv(T2),T1)
-			rel_pose=np.hstack((np.transpose(T_rel[0:3,3]),mat2quat(T_rel[0:3,0:3])))
-			recorder(stack,window,rel_pose)	
+	sys.stdout.write("\n Creating TF Records \n --------------------")
+	for j in range(1,7):
+		sys.stdout.write("\n reading vicon room %d \n" %j)
+		#200 Hz
+		imu_file=inDir+'/v'+str(j)+'/imu0/data.csv'
+		(imu_time,imu_data)=read_sensor(imu_file)
+		#100 Hz
+		vicon_file=inDir+'/v'+str(j)+'/vicon0/data.csv'
+		(vicon_time,vicon_data)=read_sensor(vicon_file)
+		t_p=0# previous time
+		for i in range(1, len(imu_time)-window,stride):
+			# print(np.argmin(abs(vicon_time-imu_time[i,0])), np.min(abs(vicon_time-imu_time[i,0])))
+			if (t_p==np.argmin(abs(vicon_time-imu_time[i,0]))):
+				continue
+			else:
+				t_p=np.argmin(abs(vicon_time-imu_time[i,0]))
+				prev_pose=vicon_data[np.argmin(abs(vicon_time-imu_time[i,0])),None]
+				stack=(imu_data[i:i+window,None])
+				curr_pose=vicon_data[np.argmin(abs(vicon_time-imu_time[i+window,0])),None]
+				#pose 1
+				rot1= quat2mat(prev_pose[0,3:7])
+				t1=np.reshape(prev_pose[0,0:3],[1,3])
+				T1=np.hstack((rot1,np.transpose(t1)))
+				T1=np.vstack((T1,np.array([0,0,0,1])))
+				#pose 2
+				rot2= quat2mat(curr_pose[0,3:7])
+				t2=np.reshape(curr_pose[0,0:3],[1,3])
+				T2=np.hstack((rot2,np.transpose(t2)))
+				T2=np.vstack((T2,np.array([0,0,0,1])))
+				T_rel=np.matmul(np.linalg.inv(T2),T1)
+				rel_pose=np.hstack((np.transpose(T_rel[0:3,3]),mat2quat(T_rel[0:3,0:3])))
+				recorder(stack,window,rel_pose)	
+	print('tf records created in records folder..')
