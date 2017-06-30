@@ -22,8 +22,8 @@ if __name__=="__main__":
         
 	imu_v,rel_pose_v,imu_len_v=read_tfrecords(validation_data)
 	imu_v,rel_pose_v,imu_len_v = tf.train.batch([imu_v,rel_pose_v,imu_len_v],batch_size=batch_size)
-	
 	rel_pose_v = tf.reshape(rel_pose_v,[batch_size, 7])
+        
 	Tv12=pose2mat(rel_pose_v)
 	Ti12=pose2mat(pred)
 	if (do_imu):
@@ -42,6 +42,10 @@ if __name__=="__main__":
 	ta_e=tf.summary.scalar('ta', ta)
 	write_op3 = tf.summary.merge([rtd_e, td_e,rta_e,ta_e])
 	init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+
+        writer_t = tf.summary.FileWriter('./graphs/train', None)
+        writer_v = tf.summary.FileWriter('./graphs/validation', None)
+        
 	# Add ops to save and restore all the variables.
 	saver = tf.train.Saver()
 	with tf.Session()  as sess:	
@@ -52,27 +56,37 @@ if __name__=="__main__":
 			step = 1
 			# Keep training until reach max iterations
 			while step * batch_size < training_iters:
-				batch_x, batch_y,imu_len_=sess.run([imu_t,rel_pose_t,imu_len_t])
+				batch_x, batch_y, imu_len_ = sess.run([imu_t,rel_pose_t,imu_len_t])
 				batch_y = batch_y.reshape((batch_size, 7))
+
+                                # write a summary
+                                
 				# Run optimization op (backprop)
-				sess.run(optimizer, feed_dict={x: batch_x, y: batch_y})
+				[opt, train_loss, summ] = sess.run([optimizer, cost, summary],
+                                                                   feed_dict={x: batch_x, y: batch_y})
+				writer_t.add_summary(summ,step)
+				# writer.flush()
+
+                                
 				#validation on different batch
-				batch_x_v, batch_y_v,imu_len_=sess.run([imu_v,rel_pose_v,imu_len_v])
-				batch_y_v = batch_y_v.reshape((batch_size, 7))
+				batch_x, batch_y, imu_len_ = sess.run([imu_v,rel_pose_v,imu_len_v])
+				batch_y = batch_y.reshape((batch_size, 7))
+				[val_loss, summ] = sess.run([cost, summary], feed_dict={x: batch_x, y: batch_y})
+				writer_v.add_summary(summ,step)
+                                
 				if step % display_step == 0:
-					# get cost
-					val_loss=sess.run(v_cost, feed_dict={x: batch_x_v, y: batch_y_v})
-					#loss for train data
-					loss = sess.run(t_cost, feed_dict={x: batch_x, y: batch_y})
 					print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + \
-					  "{:.6f}".format(loss)+" Validation loss= ""{:.6f}".format(val_loss))
+					      "{:.6f}".format(train_loss)+" Validation loss= ""{:.6f}".format(val_loss))
 				# print(step)
-				summary1=sess.run(write_op1, feed_dict={x: batch_x, y: batch_y})
-				writer_1.add_summary(summary1,step)
-				writer_1.flush()
-				summary2=sess.run(write_op2, feed_dict={x: batch_x_v, y: batch_y_v})
-				writer_2.add_summary(summary2,step)
-				writer_2.flush()
+				# summary = sess.run(write_op, feed_dict={x: batch_x, y: batch_y})
+				# writer.add_summary(summary,step)
+				# writer.flush()
+				# summary1=sess.run(write_op1, feed_dict={x: batch_x, y: batch_y})
+				# writer_1.add_summary(summary1,step)
+				# writer_1.flush()
+				# summary2=sess.run(write_op2, feed_dict={x: batch_x_v, y: batch_y_v})
+				# writer_2.add_summary(summary2,step)
+				# writer_2.flush()
 				step += 1
 			print("Optimization Finished!")
 			# Save the variables to disk.	

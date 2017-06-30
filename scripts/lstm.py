@@ -27,15 +27,10 @@ outputs, states = rnn.static_rnn(lstm_cell, t, dtype=tf.float32)
 pred= tf.matmul(outputs[-1], weights['out']) + biases['out']
 pos_loss=tf.nn.l2_loss(pred[0:3] - y[0:3])
 rot_loss=tf.nn.l2_loss(pred[3:7] - y[3:7])
-v_cost=(pos_loss+rot_loss)/batch_size
-t_cost=(pos_loss+rot_loss)/batch_size
+cost = (pos_loss+rot_loss)/batch_size
 # cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y))
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(t_cost)
 
-writer_1 = tf.summary.FileWriter('./graphs/train', None)
-train_cost=tf.summary.scalar('loss', t_cost)
-write_op1 = tf.summary.merge([train_cost])
+cost_summ = tf.summary.scalar('loss', cost)
+summary = tf.summary.merge_all()
 
-writer_2 = tf.summary.FileWriter('./graphs/validation', None)
-validation_cost=tf.summary.scalar('loss', v_cost)
-write_op2 = tf.summary.merge([validation_cost])
