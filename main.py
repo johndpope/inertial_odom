@@ -18,7 +18,8 @@ if __name__=="__main__":
 	validation_data = tf.train.string_input_producer(validation_dataset, shuffle=True)
 	imu_t,rel_pose_t,imu_len_t=read_tfrecords(train_data)
 	imu_t,rel_pose_t,imu_len_t = tf.train.batch([imu_t,rel_pose_t,imu_len_t],batch_size=batch_size)
-
+	rel_pose_t = tf.reshape(rel_pose_t,[batch_size, 7])
+        
 	imu_v,rel_pose_v,imu_len_v=read_tfrecords(validation_data)
 	imu_v,rel_pose_v,imu_len_v = tf.train.batch([imu_v,rel_pose_v,imu_len_v],batch_size=batch_size)
 	
