@@ -66,8 +66,9 @@ def write_tfrecords():
 	cam_freq=10
 	window=int(200/cam_freq) #20
 	stride=int(200/100) #2
+	n_files=7
 	sys.stdout.write("\n Creating TF Records \n --------------------")
-	for j in range(1,7):
+	for j in range(1,n_files):
 		sys.stdout.write("\n reading vicon room %d \n" %j)
 		#200 Hz
 		imu_file=inDir+'/v'+str(j)+'/imu0/data.csv'
@@ -76,6 +77,7 @@ def write_tfrecords():
 		vicon_file=inDir+'/v'+str(j)+'/vicon0/data.csv'
 		(vicon_time,vicon_data)=read_sensor(vicon_file)
 		t_p=0# previous time
+		# print(imu_data[0:3,None])
 		for i in range(1, len(imu_time)-window,stride):
 			# print(np.argmin(abs(vicon_time-imu_time[i,0])), np.min(abs(vicon_time-imu_time[i,0])))
 			if (t_p==np.argmin(abs(vicon_time-imu_time[i,0]))):
@@ -99,3 +101,18 @@ def write_tfrecords():
 				rel_pose=np.hstack((np.transpose(T_rel[0:3,3]),mat2quat(T_rel[0:3,0:3])))
 				recorder(stack,window,rel_pose)	
 	print('tf records created in records folder..')
+if __name__ == '__main__':
+	cam_freq=10
+	window=int(200/cam_freq) #20
+	stride=int(200/100) #2
+	n_files=1
+	sys.stdout.write("\n Creating TF Records \n --------------------")
+	for j in range(1,n_files):
+		sys.stdout.write("\n reading vicon room %d \n" %j)
+		#200 Hz
+		imu_file=inDir+'/v'+str(j)+'/imu0/data.csv'
+		(imu_time,imu_data)=read_sensor(imu_file)
+		#100 Hz
+		vicon_file=inDir+'/v'+str(j)+'/vicon0/data.csv'
+		(vicon_time,vicon_data)=read_sensor(vicon_file)
+		print(imu_data[0:3,None])

@@ -6,7 +6,7 @@ import numpy as np
 from io_libs.writer import *
 from scripts.hyperparams import *
 from scripts.helper_funcs import *
-from scripts.losses import rtLoss
+
 
 if __name__=="__main__":
 	if(create_tfrecords):

@@ -1,9 +1,9 @@
 # Parameters
-learning_rate = 0.001
+learning_rate = 0.0001
 training_iters = 300000
 batch_size = 100
 display_step = 10 #while training every 10 epochs print
-
+dropout=0.7
 # Network Parameters
 n_steps=20 # no of time steps of imu data and for rnn 
 n_input = 6 # imu (linear acc and ang vel) (20 readings of imu *6 channels) +7 (vicon prev pose)
@@ -24,4 +24,4 @@ using_cluster=False #to create port on cluster and to visualize
 compute='0-9'
 
 eps = 1e-6
-do_zero_motion=True
+do_zero_motion=False

@@ -1,8 +1,9 @@
 import numpy as np
 import tensorflow as tf
 import os
+import sys 
 
-inDir='../records/'
+inDir='./records/'
 def read_tfrecords(filename_queue):
 	compress = tf.python_io.TFRecordOptions(compression_type = tf.python_io.TFRecordCompressionType.GZIP)
 	reader = tf.TFRecordReader(options=compress)
@@ -29,7 +30,7 @@ def read_tfrecords(filename_queue):
 if __name__=="__main__":
 	nRecords= len([name for name in os.listdir(inDir) if os.path.isfile(os.path.join(inDir, name))])
 	print 'found %d records' % nRecords
-	records = [inDir+'/sample_'+ str(i)+'.tfrecord' for i in range(1,nRecords)]
+	records = [inDir+'/sample_'+ str(i)+'.tfrecord' for i in range(1,20)]
 	queue = tf.train.string_input_producer(records, shuffle=False)
  	imu,rel_pose,imu_len=read_tfrecords(queue)
  	BATCH_SIZE=10
@@ -40,6 +41,6 @@ if __name__=="__main__":
 		coord = tf.train.Coordinator()
 		threads = tf.train.start_queue_runners(coord=coord)
 		imu_,rel_pose_,imu_len_=sess.run([imu,rel_pose,imu_len])
-		print(imu_len_)
+		print(imu_len_[0],imu_[0][0])
 	coord.request_stop()
 	coord.join(threads)

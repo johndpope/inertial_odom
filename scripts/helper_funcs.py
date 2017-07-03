@@ -12,7 +12,7 @@ def quat_to_euler(q):#tf array [qw,qx,qy,qz] as the data is in this format
 	# roll (x-axis rotation)
 	t0 = +2.0 * (w * x + y * z)
 	t1 = +1.0 - 2.0 * (x * x + ysqr)
-	roll =tf.reshape(atan2(t0, t1),[bs,1])
+	roll =tf.reshape(tf.atan(t0/t1),[bs,1])#atan2 to atan to get angles in +/-pi
 
 	# pitch (y-axis rotation)
 	t2 = +2.0 * (w*y  - z * x)
@@ -22,7 +22,7 @@ def quat_to_euler(q):#tf array [qw,qx,qy,qz] as the data is in this format
 	# yaw (z-axis rotation)
 	t3 = +2.0 * (w * z + x * y)
 	t4 = +1.0 - 2.0 * (ysqr + z * z)
-	yaw = tf.reshape(atan2(t3, t4),[bs,1])
+	yaw = tf.reshape(tf.atan(t3/t4),[bs,1]) #atan2 to atan to get angles in +/-pi
 	return (roll,pitch,yaw)
 #ref: https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
 def quat2rotmat(q):#tf array [qw,qx,qy,qz] as the data is in this format
