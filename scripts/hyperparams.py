@@ -1,5 +1,5 @@
 # Parameters
-learning_rate = 0.0001
+learning_rate = 0.00001
 training_iters = 300000
 batch_size = 100
 display_step = 10 #while training every 10 epochs print

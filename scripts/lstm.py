@@ -43,11 +43,13 @@ if not (do_zero_motion):
 	d_x=pred[:,0]
 	d_y=pred[:,1]
 	d_z=pred[:,2]
-
 	Tv12=pose2mat(y)
 	Ti12=pose2mat(pred)
 	#RT Loss for predicted 
-	rtd, rta, td, ta =rtLoss(Ti12,Tv12)
+	rtd, rta =rtLoss(Ti12,Tv12)
+
+	#rtd_z, rta_z =rtLoss(Tv12,Tv12)
+
 	with tf.name_scope('predicted'):
 		#predicted translation
 		with tf.name_scope('translation'):
@@ -68,7 +70,7 @@ if not (do_zero_motion):
 	#losses
 	pos_loss=tf.nn.l2_loss(pred[:,0:3] - y[:,0:3])/batch_size 
 	rot_loss=tf.nn.l2_loss(pred[:,3:7] - y[:,3:7])/batch_size
-	cost = (pos_loss+rot_loss)
+	cost = (rtd+rta)
 	# cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y))
 	optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 if (do_zero_motion):
@@ -92,7 +94,7 @@ if (do_zero_motion):
 				 [0,0,1,0],
 				 [0,0,0,1]]], dtype=tf.float32),[1,4,4]),[batch_size,1,1])
 	#ground truth RT Loss
-	rtd, rta, td, ta =rtLoss(T_z,Tv12)
+	rtd, rta = rtLoss(T_z,Tv12)
 	with tf.name_scope('ground_truth'):
 		#ground truth translation
 		with tf.name_scope('translation'):
@@ -115,15 +117,17 @@ if (do_zero_motion):
 	zero_rot= tf.tile(tf.reshape(tf.Variable([[1,0,0,0]], dtype=tf.float32),[1,4]),[batch_size,1])
 	pos_loss = tf.nn.l2_loss(zero_pos- y[:,0:3])/batch_size
 	rot_loss = tf.nn.l2_loss(zero_rot- y[:,3:7])/batch_size
-	cost=(pos_loss+rot_loss)
-with tf.name_scope('losses'):
+	cost=(rtd+rta)
+with tf.name_scope('l2_loss'):
 	pos_loss_summ = tf.summary.scalar('translation_loss',pos_loss)
 	rot_loss_summ = tf.summary.scalar('quaternion_loss',rot_loss)
-	cost_summ = tf.summary.scalar('loss', cost)
+	#cost_summ = tf.summary.scalar('loss',cost)
 with tf.name_scope('RT_loss'):
+	cost_summ = tf.summary.scalar('loss',cost)
 	rtd_e=tf.summary.scalar('rtd', rtd)
-	td_e=tf.summary.scalar('td', td)
 	rta_e=tf.summary.scalar('rta', rta)
-	ta_e=tf.summary.scalar('ta', ta)
+	#cross check zeros
+	#rtd_z=tf.summary.scalar('rtd_z', rtd_z)
+	#rta_z=tf.summary.scalar('rta_z', rta_z)
 summary = tf.summary.merge_all()
 

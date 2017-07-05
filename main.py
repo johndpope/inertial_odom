@@ -5,8 +5,6 @@ from scripts.lstm import *
 import numpy as np
 from io_libs.writer import *
 from scripts.hyperparams import *
-from scripts.helper_funcs import *
-
 
 if __name__=="__main__":
 	if(create_tfrecords):
@@ -25,23 +23,7 @@ if __name__=="__main__":
 	imu_v,rel_pose_v,imu_len_v=read_tfrecords(validation_data)
 	imu_v,rel_pose_v,imu_len_v = tf.train.batch([imu_v,rel_pose_v,imu_len_v],batch_size=batch_size)
 	rel_pose_v = tf.reshape(rel_pose_v,[batch_size, 7])    
-	# Tv12=pose2mat(rel_pose_v)
-	# Ti12=pose2mat(pred)
-	# if (do_imu):
-	# 	rtd, rta, td, ta =rtLoss(Ti12,Tv12)
-	# 	writer_3 = tf.summary.FileWriter('./graphs/e_imu', None)
-	# if (do_zero_motion):
-	# 	T_z=tf.tile(tf.reshape(tf.Variable([[[1,0,0,0],
-	# 				 [0,1,0,0],
-	# 				 [0,0,1,0],
-	# 				 [0,0,0,1]]], dtype=tf.float32),[1,4,4]),[batch_size,1,1])
-	# 	rtd, rta, td, ta =rtLoss(T_z,Tv12)	
-	# 	writer_3 = tf.summary.FileWriter('./graphs/e_zero', None)
-	# rtd_e=tf.summary.scalar('rtd', rtd)
-	# td_e=tf.summary.scalar('td', td)
-	# rta_e=tf.summary.scalar('rta', rta)
-	# ta_e=tf.summary.scalar('ta', ta)
-	# write_op3 = tf.summary.merge([rtd_e, td_e,rta_e,ta_e])
+
 	init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
 	writer_t = tf.summary.FileWriter('./graphs/train', None)
 	writer_v = tf.summary.FileWriter('./graphs/validation', None)

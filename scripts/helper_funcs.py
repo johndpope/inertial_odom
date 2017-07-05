@@ -28,10 +28,18 @@ def quat_to_euler(q):#tf array [qw,qx,qy,qz] as the data is in this format
 def quat2rotmat(q):#tf array [qw,qx,qy,qz] as the data is in this format
 	shape = q.get_shape()
 	bs = int(shape[0])
-	q0=q[:,0]
-	q1=q[:,1]
-	q2=q[:,2]
-	q3=q[:,3]
+	q0=tf.reshape(q[:,0],[bs,1])
+	q1=tf.reshape(q[:,1],[bs,1])
+	q2=tf.reshape(q[:,2],[bs,1])
+	q3=tf.reshape(q[:,3],[bs,1])
+	#normalization
+	z=tf.concat([tf.square(q0),tf.square(q1),tf.square(q2),tf.square(q3)],1)
+	z=tf.reduce_sum(z, 1, keep_dims=True) 
+	q0=tf.div(q0,z)
+	q1=tf.div(q1,z)
+	q2=tf.div(q2,z)
+	q3=tf.div(q3,z)
+
 	t1=tf.reshape((q0*q0)+(q1*q1)-(q2*q2)-(q3*q3),[bs,1])
 	t2=tf.reshape(2.0*(q1*q2-q0*q3),[bs,1])
 	t3=tf.reshape(2.0*(q0*q2+q1*q3),[bs,1])
