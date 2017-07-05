@@ -24,4 +24,4 @@ using_cluster=False #to create port on cluster and to visualize
 compute='0-9'
 
 eps = 1e-6
-do_zero_motion=False
+do_zero_motion=True
