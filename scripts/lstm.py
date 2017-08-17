@@ -37,6 +37,13 @@ if not (do_zero_motion):
 	# Get lstm cell output
 	outputs, states = rnn.static_rnn(lstm_cell, t, dtype=tf.float32)
 	# Linear activation, using rnn inner loop last output
+	#with slim.arg_scope([slim.fully_connected],
+        #                                        activation_fn=None,
+                                                # normalizer_fn=slim.batch_norm,
+        #                                        weights_initializer=\
+        #                                        tf.truncated_normal_initializer(stddev=0.01),
+        #                                        weights_regularizer=slim.l2_regularizer(0.0005)):
+        #                                        pred = slim.fully_connected(outputs[-1], n_output)
 	pred= tf.matmul(outputs[-1], weights['out']) + biases['out']
 	
 	(d_roll, d_pitch, d_yaw)=quat_to_euler(pred[:,3:7])

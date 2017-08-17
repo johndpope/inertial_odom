@@ -35,6 +35,7 @@ def quat2rotmat(q):#tf array [qw,qx,qy,qz] as the data is in this format
 	#normalization
 	z=tf.concat([tf.square(q0),tf.square(q1),tf.square(q2),tf.square(q3)],1)
 	z=tf.sqrt(tf.reduce_sum(z, 1, keep_dims=True)) 
+	z=tf.reduce_sum(z, 1, keep_dims=True)
 	q0=tf.div(q0,z)
 	q1=tf.div(q1,z)
 	q2=tf.div(q2,z)
